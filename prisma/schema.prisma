@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlacementType {
+  FLOATING
+  PRODUCT_PAGE
+  INLINE
+  ORDER_CONFIRM
+  ANNOUNCEMENT_BAR
+}
+
+model Shop {
+  id          String   @id @default(cuid())
+  shopDomain  String   @unique
+  accessToken String
+  plan        String   @default("free")
+  installedAt DateTime @default(now())
+  isActive    Boolean  @default(true)
+
+  // Global settings stored as JSON
+  defaultPhone  String?
+  brandColor    String?  @default("#25D366")
+  gdprConsent   Boolean  @default(false)
+  language      String   @default("en")
+
+  placements  Placement[]
+  clickEvents ClickEvent[]
+
+  @@index([shopDomain])
+}
+
+model Placement {
+  id             String        @id @default(cuid())
+  shopDomain     String
+  type           PlacementType
+  isActive       Boolean       @default(true)
+  phoneNumber    String?
+  welcomeMessage String?
+  buttonLabel    String?       @default("Chat on WhatsApp")
+
+  // JSON columns for flexible config
+  styleConfig    Json?         @default("{}")
+  scheduleConfig Json?         @default("{}")
+  pageTargeting  Json?         @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shop        Shop         @relation(fields: [shopDomain], references: [shopDomain], onDelete: Cascade)
+  clickEvents ClickEvent[]
+
+  @@index([shopDomain])
+  @@index([shopDomain, isActive])
+}
+
+model ClickEvent {
+  id            String   @id @default(cuid())
+  shopDomain    String
+  placementId   String
+  placementType String
+  pageUrl       String?
+  productId     String?
+  orderId       String?
+  timestamp     DateTime @default(now())
+  userAgent     String?
+
+  shop      Shop      @relation(fields: [shopDomain], references: [shopDomain], onDelete: Cascade)
+  placement Placement @relation(fields: [placementId], references: [id], onDelete: Cascade)
+
+  @@index([shopDomain])
+  @@index([placementId])
+  @@index([shopDomain, timestamp])
+}

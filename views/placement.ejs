@@ -1,0 +1,460 @@
+<%
+var activePage = 'dashboard';
+var pageTitle = isNew ? 'New Placement' : 'Edit Placement';
+var style = {};
+var schedule = {};
+var targeting = {};
+if (placement) {
+  try { style = typeof placement.styleConfig === 'string' ? JSON.parse(placement.styleConfig) : (placement.styleConfig || {}); } catch(e) { style = {}; }
+  try { schedule = typeof placement.scheduleConfig === 'string' ? JSON.parse(placement.scheduleConfig) : (placement.scheduleConfig || {}); } catch(e) { schedule = {}; }
+  try { targeting = typeof placement.pageTargeting === 'string' ? JSON.parse(placement.pageTargeting) : (placement.pageTargeting || {}); } catch(e) { targeting = {}; }
+}
+var days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+var saved = typeof locals.saved !== 'undefined' ? locals.saved : false;
+%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %> — Admin</title>
+  <link rel="stylesheet" href="/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          <span>WA Widget</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/admin/dashboard?shop=<%= shop.shopDomain %>" class="nav-item active">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </a>
+        <a href="/admin/settings?shop=<%= shop.shopDomain %>" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </a>
+        <a href="/admin/billing?shop=<%= shop.shopDomain %>" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Billing
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="plan-badge plan-<%= shop.plan %>"><%= shop.plan.charAt(0).toUpperCase() + shop.plan.slice(1) %> Plan</div>
+        <div class="shop-domain"><%= shop.shopDomain %></div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1><%= isNew ? 'New Placement' : 'Edit Placement' %></h1>
+          <p class="subtitle"><%= isNew ? 'Choose a type and configure your WhatsApp button' : 'Update your ' + type + ' placement' %></p>
+        </div>
+        <a href="/admin/dashboard?shop=<%= shop.shopDomain %>" class="btn btn-secondary">← Back to Dashboard</a>
+      </div>
+
+      <% if (locals.query && locals.query.saved === '1') { %>
+      <div class="alert alert-success">✓ Placement saved successfully</div>
+      <% } %>
+
+      <% if (isNew) { %>
+      <div class="card">
+        <div class="card-header"><h2>Choose Placement Type</h2></div>
+        <div class="type-grid">
+          <a href="/admin/placement/new?shop=<%= shop.shopDomain %>&type=FLOATING" class="type-card" style="<%= type === 'FLOATING' ? 'border-color: var(--wa-green); background: var(--wa-green-dim);' : '' %>">
+            <div class="icon">💬</div><div class="name">Floating Bubble</div>
+          </a>
+          <a href="/admin/placement/new?shop=<%= shop.shopDomain %>&type=PRODUCT_PAGE" class="type-card" style="<%= type === 'PRODUCT_PAGE' ? 'border-color: var(--wa-green); background: var(--wa-green-dim);' : '' %>">
+            <div class="icon">🛍️</div><div class="name">Product Page</div>
+          </a>
+          <a href="/admin/placement/new?shop=<%= shop.shopDomain %>&type=INLINE" class="type-card" style="<%= type === 'INLINE' ? 'border-color: var(--wa-green); background: var(--wa-green-dim);' : '' %>">
+            <div class="icon">📌</div><div class="name">Inline Embed</div>
+          </a>
+          <a href="/admin/placement/new?shop=<%= shop.shopDomain %>&type=ORDER_CONFIRM" class="type-card" style="<%= type === 'ORDER_CONFIRM' ? 'border-color: var(--wa-green); background: var(--wa-green-dim);' : '' %>">
+            <div class="icon">📦</div><div class="name">Order Confirmation</div>
+          </a>
+          <a href="/admin/placement/new?shop=<%= shop.shopDomain %>&type=ANNOUNCEMENT_BAR" class="type-card" style="<%= type === 'ANNOUNCEMENT_BAR' ? 'border-color: var(--wa-green); background: var(--wa-green-dim);' : '' %>">
+            <div class="icon">📢</div><div class="name">Announcement Bar</div>
+          </a>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Placement form -->
+      <form method="POST" action="<%= isNew ? '/admin/placement?shop=' + shop.shopDomain : '/admin/placement/' + placement.id + '?shop=' + shop.shopDomain %>">
+        <input type="hidden" name="type" value="<%= type %>">
+
+        <!-- Common fields -->
+        <div class="card">
+          <div class="card-header"><h2>Basic Settings</h2></div>
+          
+          <div class="form-group">
+            <label>WhatsApp Phone Number</label>
+            <input type="text" name="phoneNumber" class="form-control" 
+                   value="<%= placement ? (placement.phoneNumber || '') : (shop.defaultPhone || '') %>"
+                   placeholder="+1234567890 (with country code)">
+            <p class="form-hint">Include country code. Example: +1 for US, +44 for UK, +91 for India</p>
+          </div>
+
+          <% if (type !== 'ANNOUNCEMENT_BAR') { %>
+          <div class="form-group">
+            <label>Button Label</label>
+            <input type="text" name="buttonLabel" class="form-control" 
+                   value="<%= placement ? (placement.buttonLabel || '') : 'Chat on WhatsApp' %>"
+                   placeholder="Chat on WhatsApp">
+          </div>
+          <% } %>
+
+          <% if (type === 'FLOATING' || type === 'PRODUCT_PAGE') { %>
+          <div class="form-group">
+            <label>Welcome / Pre-filled Message</label>
+            <textarea name="welcomeMessage" class="form-control"><%= placement ? (placement.welcomeMessage || '') : '' %></textarea>
+            <p class="form-hint">This message will be pre-filled in the customer's WhatsApp</p>
+          </div>
+          <% } %>
+        </div>
+
+        <!-- FLOATING BUBBLE SETTINGS -->
+        <% if (type === 'FLOATING') { %>
+        <div class="card">
+          <div class="card-header"><h2>Bubble Appearance</h2></div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Size</label>
+              <select name="size" class="form-control">
+                <option value="small" <%= style.size === 'small' ? 'selected' : '' %>>Small (48px)</option>
+                <option value="medium" <%= (!style.size || style.size === 'medium') ? 'selected' : '' %>>Medium (60px)</option>
+                <option value="large" <%= style.size === 'large' ? 'selected' : '' %>>Large (72px)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Position</label>
+              <select name="position" class="form-control">
+                <option value="bottom-right" <%= (!style.position || style.position === 'bottom-right') ? 'selected' : '' %>>Bottom Right</option>
+                <option value="bottom-left" <%= style.position === 'bottom-left' ? 'selected' : '' %>>Bottom Left</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Bottom Offset (px)</label>
+              <input type="number" name="bottomOffset" class="form-control" value="<%= style.bottomOffset || 20 %>" min="0" max="200">
+            </div>
+            <div class="form-group">
+              <label>Side Offset (px)</label>
+              <input type="number" name="sideOffset" class="form-control" value="<%= style.sideOffset || 20 %>" min="0" max="200">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Tooltip Text</label>
+            <input type="text" name="tooltipText" class="form-control" value="<%= style.tooltipText || '' %>" placeholder="Chat with us!">
+            <p class="form-hint">Shown when customer hovers over the bubble</p>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Animation</label>
+              <select name="animation" class="form-control">
+                <option value="none" <%= (!style.animation || style.animation === 'none') ? 'selected' : '' %>>None</option>
+                <option value="pulse" <%= style.animation === 'pulse' ? 'selected' : '' %>>Pulse</option>
+                <option value="bounce" <%= style.animation === 'bounce' ? 'selected' : '' %>>Bounce</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Background Color</label>
+              <div class="color-input-wrap">
+                <input type="color" name="bgColor" value="<%= style.bgColor || '#25D366' %>" onchange="this.nextElementSibling.value = this.value">
+                <input type="text" class="form-control" value="<%= style.bgColor || '#25D366' %>" readonly>
+              </div>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- PRODUCT PAGE SETTINGS -->
+        <% if (type === 'PRODUCT_PAGE') { %>
+        <div class="card">
+          <div class="card-header"><h2>Product Page Style</h2></div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Button Style</label>
+              <select name="buttonStyle" class="form-control">
+                <option value="filled" <%= (!style.buttonStyle || style.buttonStyle === 'filled') ? 'selected' : '' %>>Filled</option>
+                <option value="outlined" <%= style.buttonStyle === 'outlined' ? 'selected' : '' %>>Outlined</option>
+                <option value="text-only" <%= style.buttonStyle === 'text-only' ? 'selected' : '' %>>Text Only</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Position</label>
+              <select name="position" class="form-control">
+                <option value="below_atc" <%= (!style.position || style.position === 'below_atc') ? 'selected' : '' %>>Below Add to Cart</option>
+                <option value="above_atc" <%= style.position === 'above_atc' ? 'selected' : '' %>>Above Add to Cart</option>
+                <option value="below_desc" <%= style.position === 'below_desc' ? 'selected' : '' %>>Below Description</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Button Color</label>
+              <div class="color-input-wrap">
+                <input type="color" name="bgColor" value="<%= style.bgColor || '#25D366' %>" onchange="this.nextElementSibling.value = this.value">
+                <input type="text" class="form-control" value="<%= style.bgColor || '#25D366' %>" readonly>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Text Color</label>
+              <div class="color-input-wrap">
+                <input type="color" name="textColor" value="<%= style.textColor || '#ffffff' %>" onchange="this.nextElementSibling.value = this.value">
+                <input type="text" class="form-control" value="<%= style.textColor || '#ffffff' %>" readonly>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Pre-filled Message Template</label>
+            <textarea name="messageTemplate" class="form-control"><%= style.messageTemplate || 'Hi, I want to ask about: {{product_name}} - {{product_url}}' %></textarea>
+            <p class="form-hint">Available variables: {{product_name}}, {{product_url}}, {{variant_name}}, {{price}}</p>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- INLINE EMBED SETTINGS -->
+        <% if (type === 'INLINE') { %>
+        <div class="card">
+          <div class="card-header"><h2>Inline Button Style</h2></div>
+          
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>Alignment</label>
+              <select name="alignment" class="form-control">
+                <option value="left" <%= style.alignment === 'left' ? 'selected' : '' %>>Left</option>
+                <option value="center" <%= (!style.alignment || style.alignment === 'center') ? 'selected' : '' %>>Center</option>
+                <option value="right" <%= style.alignment === 'right' ? 'selected' : '' %>>Right</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Width</label>
+              <select name="width" class="form-control">
+                <option value="auto" <%= (!style.width || style.width === 'auto') ? 'selected' : '' %>>Auto</option>
+                <option value="full" <%= style.width === 'full' ? 'selected' : '' %>>Full Width</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Border Radius</label>
+              <input type="text" name="borderRadius" class="form-control" value="<%= style.borderRadius || '8px' %>" placeholder="8px">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Background Color</label>
+              <div class="color-input-wrap">
+                <input type="color" name="bgColor" value="<%= style.bgColor || '#25D366' %>" onchange="this.nextElementSibling.value = this.value">
+                <input type="text" class="form-control" value="<%= style.bgColor || '#25D366' %>" readonly>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Text Color</label>
+              <div class="color-input-wrap">
+                <input type="color" name="textColor" value="<%= style.textColor || '#ffffff' %>" onchange="this.nextElementSibling.value = this.value">
+                <input type="text" class="form-control" value="<%= style.textColor || '#ffffff' %>" readonly>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <% if (snippet) { %>
+        <div class="card">
+          <div class="card-header"><h2>Liquid Snippet</h2></div>
+          <div class="alert alert-info">Copy the snippet below and add it to your theme</div>
+          
+          <div class="form-group">
+            <label>Render Tag (paste in your template)</label>
+            <div class="snippet-box">
+              <pre id="renderTag"><%= snippet.renderTag %></pre>
+              <button type="button" class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('renderTag').textContent.trim()); this.textContent='Copied!';">Copy</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Snippet File Content</label>
+            <div class="snippet-box">
+              <pre id="snippetContent"><%= snippet.content %></pre>
+              <button type="button" class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('snippetContent').textContent.trim()); this.textContent='Copied!';">Copy</button>
+            </div>
+          </div>
+
+          <p class="section-title">Setup Instructions</p>
+          <ol class="instructions">
+            <% snippet.instructions.forEach(function(inst) { %>
+              <li><%= inst.replace(/^\d+\.\s*/, '') %></li>
+            <% }); %>
+          </ol>
+        </div>
+        <% } %>
+        <% } %>
+
+        <!-- ORDER CONFIRMATION SETTINGS -->
+        <% if (type === 'ORDER_CONFIRM') { %>
+        <div class="card">
+          <div class="card-header"><h2>Order Confirmation Settings</h2></div>
+          
+          <div class="form-group">
+            <label>Message Template</label>
+            <textarea name="messageTemplate" class="form-control"><%= style.messageTemplate || 'Hi, I have a question about my order #{{order_number}}' %></textarea>
+            <p class="form-hint">Available variables: {{order_number}}, {{shop_name}}</p>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Button Color</label>
+              <div class="color-input-wrap">
+                <input type="color" name="bgColor" value="<%= style.bgColor || '#25D366' %>" onchange="this.nextElementSibling.value = this.value">
+                <input type="text" class="form-control" value="<%= style.bgColor || '#25D366' %>" readonly>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Text Color</label>
+              <div class="color-input-wrap">
+                <input type="color" name="textColor" value="<%= style.textColor || '#ffffff' %>" onchange="this.nextElementSibling.value = this.value">
+                <input type="text" class="form-control" value="<%= style.textColor || '#ffffff' %>" readonly>
+              </div>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- ANNOUNCEMENT BAR SETTINGS -->
+        <% if (type === 'ANNOUNCEMENT_BAR') { %>
+        <div class="card">
+          <div class="card-header"><h2>Announcement Bar Settings</h2></div>
+          
+          <div class="form-group">
+            <label>Bar Text</label>
+            <input type="text" name="buttonLabel" class="form-control" 
+                   value="<%= placement ? (placement.buttonLabel || '') : 'Questions? Chat with us on WhatsApp' %>"
+                   placeholder="Questions? Chat with us on WhatsApp">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Background Color</label>
+              <div class="color-input-wrap">
+                <input type="color" name="bgColor" value="<%= style.bgColor || '#25D366' %>" onchange="this.nextElementSibling.value = this.value">
+                <input type="text" class="form-control" value="<%= style.bgColor || '#25D366' %>" readonly>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Text Color</label>
+              <div class="color-input-wrap">
+                <input type="color" name="textColor" value="<%= style.textColor || '#ffffff' %>" onchange="this.nextElementSibling.value = this.value">
+                <input type="text" class="form-control" value="<%= style.textColor || '#ffffff' %>" readonly>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Dismissible</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <label class="toggle">
+                <input type="checkbox" name="dismissible" <%= style.dismissible ? 'checked' : '' %>>
+                <span class="toggle-slider"></span>
+              </label>
+              <span style="font-size: 13px; color: var(--text-secondary);">Allow customers to dismiss the bar</span>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Page Targeting -->
+        <% if (type === 'FLOATING' || type === 'ANNOUNCEMENT_BAR') { %>
+        <div class="card">
+          <div class="card-header"><h2>Page Targeting</h2></div>
+          
+          <div class="form-group">
+            <label>Show On</label>
+            <select name="showOn" class="form-control" style="max-width: 300px;" onchange="document.getElementById('specific-pages').style.display = this.value === 'specific' ? 'block' : 'none';">
+              <option value="all" <%= (!targeting.showOn || targeting.showOn === 'all') ? 'selected' : '' %>>All Pages</option>
+              <option value="specific" <%= targeting.showOn === 'specific' ? 'selected' : '' %>>Specific Pages</option>
+            </select>
+          </div>
+
+          <div id="specific-pages" style="display: <%= targeting.showOn === 'specific' ? 'block' : 'none' %>;">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                <input type="checkbox" name="page_homepage" <%= (targeting.pages && targeting.pages.homepage) ? 'checked' : '' %>> Homepage
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                <input type="checkbox" name="page_product" <%= (targeting.pages && targeting.pages.product) ? 'checked' : '' %>> Product Pages
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                <input type="checkbox" name="page_collection" <%= (targeting.pages && targeting.pages.collection) ? 'checked' : '' %>> Collection Pages
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                <input type="checkbox" name="page_cart" <%= (targeting.pages && targeting.pages.cart) ? 'checked' : '' %>> Cart Page
+              </label>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Business Hours -->
+        <% if (type === 'FLOATING') { %>
+        <div class="card">
+          <div class="card-header"><h2>Business Hours</h2></div>
+          
+          <div class="form-group">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+              <label class="toggle">
+                <input type="checkbox" name="enableSchedule" id="enableSchedule" 
+                       <%= schedule.enabled ? 'checked' : '' %>
+                       onchange="document.getElementById('schedule-grid').style.display = this.checked ? 'block' : 'none';">
+                <span class="toggle-slider"></span>
+              </label>
+              <span style="font-size: 13px; color: var(--text-secondary);">Only show during business hours</span>
+            </div>
+          </div>
+
+          <div id="schedule-grid" style="display: <%= schedule.enabled ? 'block' : 'none' %>;">
+            <div class="schedule-grid">
+              <% days.forEach(function(day) {
+                var ds = (schedule.days && schedule.days[day]) || { enabled: true, start: '09:00', end: '17:00' };
+              %>
+              <div class="schedule-row">
+                <span class="day-name"><%= day.charAt(0).toUpperCase() + day.slice(1) %></span>
+                <label class="toggle" style="transform: scale(0.8);">
+                  <input type="checkbox" name="schedule_<%= day %>_enabled" <%= ds.enabled ? 'checked' : '' %>>
+                  <span class="toggle-slider"></span>
+                </label>
+                <input type="time" name="schedule_<%= day %>_start" class="form-control" value="<%= ds.start || '09:00' %>">
+                <span style="color: var(--text-muted);">→</span>
+                <input type="time" name="schedule_<%= day %>_end" class="form-control" value="<%= ds.end || '17:00' %>">
+              </div>
+              <% }); %>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+        <div style="display: flex; gap: 12px; margin-top: 8px;">
+          <button type="submit" class="btn btn-primary"><%= isNew ? 'Create Placement' : 'Save Changes' %></button>
+          <a href="/admin/dashboard?shop=<%= shop.shopDomain %>" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </main>
+  </div>
+</body>
+</html>
