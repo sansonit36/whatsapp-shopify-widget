@@ -60,6 +60,11 @@ app.use('/api', apiRoutes);
 app.use('/admin/billing', billingRoutes);
 app.use('/webhooks', webhookRoutes);
 
+// ── Privacy Policy ──────────────────────────────────────────
+app.get('/privacy', (req, res) => {
+  res.render('privacy');
+});
+
 // ── Root redirect ───────────────────────────────────────────
 app.get('/', (req, res) => {
   if (req.query.shop) {

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WhatsApp Chat Widget — Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #25D366;
+      --green-dark: #128C7E;
+      --green-light: #dcfce7;
+      --bg: #0a0f1a;
+      --card: #111827;
+      --border: #1f2937;
+      --text: #f9fafb;
+      --muted: #9ca3af;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      width: 1600px;
+      height: 900px;
+    }
+
+    /* ─── SCENE WRAPPER ─────────────────────────── */
+    .scene {
+      position: absolute; inset: 0;
+      display: none;
+      animation: fadeIn 0.6s ease forwards;
+    }
+    .scene.active { display: flex; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(37,211,102,0.4); } 50% { box-shadow: 0 0 0 18px rgba(37,211,102,0); } }
+    @keyframes typing { 0%,80%,100%{transform:scale(0);opacity:.3} 40%{transform:scale(1);opacity:1} }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    @keyframes drawLine { from{stroke-dashoffset:300} to{stroke-dashoffset:0} }
+    @keyframes countUp { from{opacity:0;transform:scale(0.8)} to{opacity:1;transform:scale(1)} }
+    @keyframes wiggle { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)} }
+    @keyframes ripple { 0%{transform:scale(0.8);opacity:1} 100%{transform:scale(2.5);opacity:0} }
+
+    /* ─── GLOBAL ELEMENTS ───────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(37,211,102,0.12); border: 1px solid rgba(37,211,102,0.3);
+      color: var(--green); border-radius: 99px;
+      padding: 4px 12px; font-size: 12px; font-weight: 600;
+    }
+    .wa-logo {
+      width: 40px; height: 40px; background: var(--green);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .wa-logo svg { width: 22px; height: 22px; fill: white; }
+
+    /* =============================================
+       SCENE 1 — HERO / INTRO
+    ============================================= */
+    #scene1 {
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at 50% 60%, #0f2a1a 0%, var(--bg) 70%);
+      gap: 20px;
+    }
+    #scene1 .logo-wrap {
+      width: 90px; height: 90px; background: var(--green);
+      border-radius: 24px; display: flex; align-items: center; justify-content: center;
+      animation: pop 0.7s 0.2s both, pulse 2s 1s infinite;
+      box-shadow: 0 0 60px rgba(37,211,102,0.35);
+    }
+    #scene1 .logo-wrap svg { width: 52px; height: 52px; fill: white; }
+    #scene1 h1 { font-size: 52px; font-weight: 800; animation: slideUp 0.6s 0.5s both; }
+    #scene1 h1 span { color: var(--green); }
+    #scene1 p { font-size: 20px; color: var(--muted); animation: slideUp 0.6s 0.7s both; text-align: center; max-width: 560px; line-height: 1.6; }
+    #scene1 .badge { animation: slideUp 0.6s 0.9s both; font-size: 14px; padding: 6px 16px; }
+    #scene1 .pills { display: flex; gap: 12px; animation: slideUp 0.6s 1.1s both; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+    .pill { background: var(--card); border: 1px solid var(--border); border-radius: 99px; padding: 8px 18px; font-size: 14px; font-weight: 500; }
+
+    /* =============================================
+       SCENE 2 — ADMIN DASHBOARD
+    ============================================= */
+    #scene2 {
+      flex-direction: row;
+      background: var(--bg);
+    }
+    .sidebar {
+      width: 220px; background: var(--card); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 24px 0; animation: slideIn 0.5s 0.2s both;
+      flex-shrink: 0;
+    }
+    .sidebar-brand { padding: 0 20px 24px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+    .sidebar-brand span { font-weight: 700; font-size: 15px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 20px; cursor: pointer; font-size: 14px; color: var(--muted);
+      transition: all 0.2s; border-left: 3px solid transparent;
+    }
+    .nav-item.active { color: var(--green); background: rgba(37,211,102,0.08); border-left-color: var(--green); }
+    .main-content { flex: 1; padding: 32px; overflow: hidden; animation: fadeIn 0.5s 0.4s both; }
+    .page-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+    .page-sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+    .stats-row { display: flex; gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      flex: 1; background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .stat-value { font-size: 32px; font-weight: 800; color: var(--green); animation: countUp 0.5s both; }
+    .stat-value.d1 { animation-delay: 0.6s; }
+    .stat-value.d2 { animation-delay: 0.8s; }
+    .stat-value.d3 { animation-delay: 1.0s; }
+    .placement-list { display: flex; flex-direction: column; gap: 12px; }
+    .placement-row {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 14px 20px; display: flex; align-items: center; gap: 14px;
+      animation: slideUp 0.4s both;
+    }
+    .placement-row.r1 { animation-delay: 0.7s; }
+    .placement-row.r2 { animation-delay: 0.85s; }
+    .placement-row.r3 { animation-delay: 1.0s; }
+    .p-icon { width: 38px; height: 38px; border-radius: 10px; background: rgba(37,211,102,0.15); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .p-name { font-weight: 600; font-size: 15px; }
+    .p-type { font-size: 12px; color: var(--muted); }
+    .p-status { margin-left: auto; }
+    .toggle { width: 44px; height: 24px; background: var(--green); border-radius: 99px; position: relative; cursor: pointer; }
+    .toggle::after { content: ''; position: absolute; width: 18px; height: 18px; background: white; border-radius: 50%; top: 3px; left: 22px; }
+
+    /* =============================================
+       SCENE 3 — STOREFRONT (FLOATING BUBBLE)
+    ============================================= */
+    #scene3 {
+      flex-direction: row;
+      align-items: stretch;
+    }
+    .store-frame {
+      flex: 1; background: #f9fafb; display: flex; flex-direction: column;
+      color: #111; overflow: hidden; position: relative;
+    }
+    .store-nav {
+      background: white; padding: 14px 40px; display: flex; align-items: center; gap: 20px;
+      border-bottom: 1px solid #e5e7eb; animation: slideUp 0.4s 0.2s both;
+    }
+    .store-logo { font-weight: 800; font-size: 18px; color: #111; }
+    .store-nav-links { display: flex; gap: 20px; margin-left: 30px; font-size: 14px; color: #6b7280; }
+    .store-nav-links span { cursor: pointer; }
+    .store-nav-links span:first-child { color: #111; font-weight: 600; }
+    .store-body { flex: 1; display: flex; gap: 0; }
+    .product-img {
+      width: 420px; background: linear-gradient(135deg, #e0f2fe, #dbeafe); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 90px;
+      animation: slideIn 0.5s 0.4s both;
+    }
+    .product-detail { flex: 1; padding: 40px; animation: slideUp 0.5s 0.5s both; }
+    .product-badge { background: #dcfce7; color: #166534; border-radius: 99px; padding: 4px 12px; font-size: 12px; font-weight: 600; display: inline-block; margin-bottom: 12px; }
+    .product-name { font-size: 28px; font-weight: 800; color: #111; margin-bottom: 8px; }
+    .product-price { font-size: 24px; font-weight: 700; color: var(--green-dark); margin-bottom: 20px; }
+    .product-desc { color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
+    .btn-add { background: #111; color: white; border: none; padding: 14px 32px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 12px; }
+    .btn-wa {
+      background: var(--green); color: white; border: none; padding: 14px 32px;
+      border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      animation: slideUp 0.5s 1.0s both;
+      box-shadow: 0 4px 20px rgba(37,211,102,0.4);
+    }
+    .wa-bubble {
+      position: absolute; bottom: 28px; right: 28px;
+      width: 62px; height: 62px; background: var(--green);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 4px 24px rgba(37,211,102,0.5);
+      animation: pop 0.7s 1.2s both, pulse 2s 2s infinite;
+    }
+    .wa-bubble svg { width: 34px; height: 34px; fill: white; }
+    .ripple-ring {
+      position: absolute; bottom: 28px; right: 28px;
+      width: 62px; height: 62px; border-radius: 50%;
+      border: 2px solid var(--green); animation: ripple 1.8s 2s infinite;
+    }
+    .wa-popup {
+      position: absolute; bottom: 100px; right: 28px;
+      background: white; border-radius: 18px; padding: 18px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.15); width: 280px;
+      animation: pop 0.5s 2.5s both;
+    }
+    .wa-popup-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .wa-popup-name { font-weight: 700; font-size: 14px; color: #111; }
+    .wa-popup-status { font-size: 12px; color: #22c55e; }
+    .wa-popup-msg { background: #f0fdf4; border-radius: 12px; padding: 10px 14px; font-size: 13px; color: #374151; line-height: 1.5; }
+    .typing-dots { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
+    .typing-dots span { width: 7px; height: 7px; background: #9ca3af; border-radius: 50%; animation: typing 1.2s infinite; }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    /* =============================================
+       SCENE 4 — ANALYTICS / CHARTS
+    ============================================= */
+    #scene4 {
+      flex-direction: column;
+      padding: 40px 48px;
+      background: var(--bg);
+    }
+    #scene4 .page-title { animation: slideUp 0.5s 0.2s both; }
+    #scene4 .page-sub { animation: slideUp 0.5s 0.35s both; }
+    .analytics-row { display: flex; gap: 20px; margin-bottom: 24px; }
+    .big-stat {
+      flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 24px;
+      animation: slideUp 0.5s both;
+    }
+    .big-stat.s1 { animation-delay: 0.4s; }
+    .big-stat.s2 { animation-delay: 0.55s; }
+    .big-stat.s3 { animation-delay: 0.7s; }
+    .big-stat.s4 { animation-delay: 0.85s; }
+    .big-label { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    .big-number { font-size: 38px; font-weight: 800; }
+    .big-number.green { color: var(--green); }
+    .chart-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 24px; animation: slideUp 0.5s 0.9s both; }
+    .chart-title { font-weight: 600; margin-bottom: 16px; }
+    .bars { display: flex; align-items: flex-end; gap: 8px; height: 120px; }
+    .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; }
+    .bar { width: 100%; background: linear-gradient(to top, var(--green-dark), var(--green)); border-radius: 8px 8px 0 0; transform-origin: bottom; animation: growBar 0.8s both cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes growBar { from{transform:scaleY(0)} to{transform:scaleY(1)} }
+    .bar-label { font-size: 11px; color: var(--muted); }
+    .bar.b1 { height: 45%; animation-delay: 1s; }
+    .bar.b2 { height: 65%; animation-delay: 1.1s; }
+    .bar.b3 { height: 55%; animation-delay: 1.2s; }
+    .bar.b4 { height: 80%; animation-delay: 1.3s; }
+    .bar.b5 { height: 60%; animation-delay: 1.4s; }
+    .bar.b6 { height: 90%; animation-delay: 1.5s; }
+    .bar.b7 { height: 75%; animation-delay: 1.6s; }
+
+    /* =============================================
+       SCENE 5 — CTA / OUTRO
+    ============================================= */
+    #scene5 {
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at 50% 50%, #0f2a1a 0%, var(--bg) 70%);
+      gap: 24px;
+    }
+    #scene5 .big-icon {
+      width: 110px; height: 110px; background: var(--green); border-radius: 28px;
+      display: flex; align-items: center; justify-content: center;
+      animation: pop 0.7s 0.2s both; box-shadow: 0 0 80px rgba(37,211,102,0.4);
+    }
+    #scene5 .big-icon svg { width: 65px; height: 65px; fill: white; }
+    #scene5 h2 { font-size: 46px; font-weight: 800; animation: slideUp 0.6s 0.5s both; text-align: center; }
+    #scene5 h2 span { color: var(--green); }
+    #scene5 .sub { font-size: 18px; color: var(--muted); animation: slideUp 0.6s 0.7s both; text-align: center; max-width: 500px; }
+    #scene5 .cta-row { display: flex; gap: 16px; animation: slideUp 0.6s 0.9s both; }
+    .cta-btn {
+      background: var(--green); color: white; border: none;
+      padding: 16px 36px; font-size: 16px; font-weight: 700;
+      border-radius: 12px; cursor: pointer; animation: float 3s 1.2s infinite ease-in-out;
+    }
+    .cta-btn-sec {
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+      padding: 16px 36px; font-size: 16px; font-weight: 600;
+      border-radius: 12px; cursor: pointer;
+    }
+    .features-grid { display: flex; gap: 16px; animation: slideUp 0.6s 1.1s both; }
+    .feat-chip { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .feat-chip .dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; }
+
+    /* ─── PROGRESS BAR ──────────────────────────── */
+    .progress-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 4px; background: rgba(37,211,102,0.15);
+    }
+    .progress-fill {
+      height: 100%; background: var(--green); width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    /* ─── SCENE LABEL ───────────────────────────── */
+    .scene-label {
+      position: fixed; top: 20px; right: 24px;
+      background: rgba(0,0,0,0.6); border: 1px solid var(--border);
+      border-radius: 99px; padding: 6px 14px; font-size: 12px; color: var(--muted);
+      backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+<div class="scene-label" id="sceneLabel">1 / 5</div>
+
+<!-- ─── SCENE 1: HERO ─────────────────────────────── -->
+<div class="scene active" id="scene1">
+  <div class="logo-wrap">
+    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+  </div>
+  <h1><span>WhatsApp</span> Chat Widget</h1>
+  <p>Place WhatsApp buttons anywhere in your Shopify store — no coding required.</p>
+  <div class="badge">✦ Available on the Shopify App Store</div>
+  <div class="pills">
+    <div class="pill">🫧 Floating Bubble</div>
+    <div class="pill">🛍 Product Page</div>
+    <div class="pill">📦 Order Confirmation</div>
+    <div class="pill">📢 Announcement Bar</div>
+  </div>
+</div>
+
+<!-- ─── SCENE 2: DASHBOARD ────────────────────────── -->
+<div class="scene" id="scene2">
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <div class="wa-logo">
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+      </div>
+      <span>WA Widget</span>
+    </div>
+    <div class="nav-item active">📊 &nbsp;Dashboard</div>
+    <div class="nav-item">🗂 &nbsp;Placements</div>
+    <div class="nav-item">⚙️ &nbsp;Settings</div>
+    <div class="nav-item">💳 &nbsp;Billing</div>
+  </div>
+  <div class="main-content">
+    <div class="page-title">Dashboard</div>
+    <div class="page-sub">Your WhatsApp widget performance</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total Clicks Today</div><div class="stat-value d1">128</div></div>
+      <div class="stat-card"><div class="stat-label">Active Placements</div><div class="stat-value d2">4</div></div>
+      <div class="stat-card"><div class="stat-label">Clicks This Week</div><div class="stat-value d3">863</div></div>
+    </div>
+    <div class="placement-list">
+      <div class="placement-row r1"><div class="p-icon">🫧</div><div><div class="p-name">Floating Bubble</div><div class="p-type">Global · All pages</div></div><div class="p-status"><div class="toggle"></div></div></div>
+      <div class="placement-row r2"><div class="p-icon">🛍</div><div><div class="p-name">Product Page Button</div><div class="p-type">Product pages · Below Add to Cart</div></div><div class="p-status"><div class="toggle"></div></div></div>
+      <div class="placement-row r3"><div class="p-icon">📢</div><div><div class="p-name">Announcement Bar</div><div class="p-type">Homepage · Top of page</div></div><div class="p-status"><div class="toggle"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SCENE 3: STOREFRONT ───────────────────────── -->
+<div class="scene" id="scene3">
+  <div class="store-frame">
+    <div class="store-nav">
+      <div class="store-logo">StyleCo.</div>
+      <div class="store-nav-links"><span>Home</span><span>Shop</span><span>About</span><span>Contact</span></div>
+    </div>
+    <div class="store-body">
+      <div class="product-img">👟</div>
+      <div class="product-detail">
+        <div class="product-badge">In Stock</div>
+        <div class="product-name">Air Runner Pro X</div>
+        <div class="product-price">$129.00</div>
+        <div class="product-desc">Ultra-lightweight running shoes with responsive foam technology. Engineered for speed and comfort across any terrain.</div>
+        <button class="btn-add">Add to Cart</button>
+        <button class="btn-wa">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+          Ask on WhatsApp about this product
+        </button>
+      </div>
+    </div>
+    <!-- Floating Bubble -->
+    <div class="ripple-ring"></div>
+    <div class="wa-bubble">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+    </div>
+    <!-- Popup chat -->
+    <div class="wa-popup">
+      <div class="wa-popup-header">
+        <div class="wa-logo" style="width:36px;height:36px">
+          <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        </div>
+        <div><div class="wa-popup-name">StyleCo. Support</div><div class="wa-popup-status">● Online now</div></div>
+      </div>
+      <div class="wa-popup-msg">👋 Hi! Ask me anything about <strong>Air Runner Pro X</strong>. We usually reply within minutes!
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SCENE 4: ANALYTICS ────────────────────────── -->
+<div class="scene" id="scene4">
+  <div class="page-title">Analytics</div>
+  <div class="page-sub">Track how merchants engage with your WhatsApp buttons</div>
+  <div class="analytics-row">
+    <div class="big-stat s1"><div class="big-label">Total Clicks (Month)</div><div class="big-number green">3,842</div></div>
+    <div class="big-stat s2"><div class="big-label">Top Placement</div><div class="big-number" style="font-size:22px;padding-top:8px;">🛍 Product Page</div></div>
+    <div class="big-stat s3"><div class="big-label">Avg. Daily Clicks</div><div class="big-number green">128</div></div>
+    <div class="big-stat s4"><div class="big-label">Active Placements</div><div class="big-number green">4</div></div>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-title">Daily Clicks — Last 7 Days</div>
+    <div class="bars">
+      <div class="bar-wrap"><div class="bar b1"></div><div class="bar-label">Mon</div></div>
+      <div class="bar-wrap"><div class="bar b2"></div><div class="bar-label">Tue</div></div>
+      <div class="bar-wrap"><div class="bar b3"></div><div class="bar-label">Wed</div></div>
+      <div class="bar-wrap"><div class="bar b4"></div><div class="bar-label">Thu</div></div>
+      <div class="bar-wrap"><div class="bar b5"></div><div class="bar-label">Fri</div></div>
+      <div class="bar-wrap"><div class="bar b6"></div><div class="bar-label">Sat</div></div>
+      <div class="bar-wrap"><div class="bar b7"></div><div class="bar-label">Sun</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SCENE 5: OUTRO / CTA ──────────────────────── -->
+<div class="scene" id="scene5">
+  <div class="big-icon">
+    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+  </div>
+  <h2>Start Converting Visitors<br>into <span>WhatsApp Conversations</span></h2>
+  <div class="sub">Free plan available. No credit card required. Install in under 60 seconds.</div>
+  <div class="features-grid">
+    <div class="feat-chip"><div class="dot"></div>Zero coding required</div>
+    <div class="feat-chip"><div class="dot"></div>Works with any theme</div>
+    <div class="feat-chip"><div class="dot"></div>7-day free trial</div>
+    <div class="feat-chip"><div class="dot"></div>Free plan available</div>
+  </div>
+  <div class="cta-row">
+    <button class="cta-btn">Install Free on Shopify →</button>
+  </div>
+</div>
+
+<script>
+  const scenes = [1, 2, 3, 4, 5];
+  const durations = [4000, 5000, 6000, 5000, 5000]; // ms each scene shows
+  let current = 0;
+
+  function showScene(i) {
+    document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById('scene' + (i + 1));
+    el.classList.add('active');
+    document.getElementById('sceneLabel').textContent = (i + 1) + ' / ' + scenes.length;
+    // Progress bar
+    const pct = ((i) / scenes.length) * 100;
+    document.getElementById('progress').style.width = pct + '%';
+  }
+
+  function next() {
+    current = (current + 1) % scenes.length;
+    showScene(current);
+    setTimeout(next, durations[current]);
+  }
+
+  // Start
+  showScene(0);
+  setTimeout(next, durations[0]);
+</script>
+</body>
+</html>
