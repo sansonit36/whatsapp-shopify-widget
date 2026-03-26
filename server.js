@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 
 const app = express();
+app.set('trust proxy', 1); // Trust the Railway load balancer so secure cookies work!
 const PORT = process.env.PORT || 3000;
 
 // ── View engine ──────────────────────────────────────────────
@@ -26,10 +27,10 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: true, // Always true for Shopify Production environments
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+      sameSite: 'none', // Required for cross-site Shopify auth redirects
     },
   })
 );
