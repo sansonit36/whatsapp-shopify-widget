@@ -92,7 +92,7 @@ router.get('/callback', async (req, res) => {
     try {
       const scriptUrl = `${process.env.HOST}/widget.js`;
       const scriptTagResponse = await fetch(
-        `https://${shop}/admin/api/2024-01/script_tags.json`,
+        `https://${shop}/admin/api/2024-04/script_tags.json`,
         {
           method: 'POST',
           headers: {
@@ -124,7 +124,7 @@ router.get('/callback', async (req, res) => {
 
     for (const wh of webhookTopics) {
       try {
-        await fetch(`https://${shop}/admin/api/2024-01/webhooks.json`, {
+        await fetch(`https://${shop}/admin/api/2024-04/webhooks.json`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
