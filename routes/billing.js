@@ -42,70 +42,19 @@ router.get('/', verifyRequest, async (req, res) => {
 
 /**
  * POST /admin/billing/subscribe
- * Creates an appSubscription via GraphQL
+ * With Managed Pricing, redirect to Shopify's plan selection page
  */
 router.post('/subscribe', verifyRequest, async (req, res) => {
   try {
     const shopDomain = req.session.shop;
-    const accessToken = req.session.accessToken;
-    const planKey = req.body.plan; // 'basic' or 'pro'
+    const apiKey = process.env.SHOPIFY_API_KEY;
 
-    if (!PLANS[planKey]) {
-      return res.status(400).send('Invalid plan');
-    }
-
-    const plan = PLANS[planKey];
-    const returnUrl = `${process.env.HOST}/admin/billing/callback?shop=${shopDomain}&plan=${planKey}`;
-
-    const mutation = `
-      mutation {
-        appSubscriptionCreate(
-          name: "WhatsApp Widget ${plan.name}",
-          returnUrl: "${returnUrl}",
-          trialDays: ${plan.trialDays},
-          lineItems: [{
-            plan: {
-              appRecurringPricingDetails: {
-                price: { amount: ${plan.price}, currencyCode: USD }
-              }
-            }
-          }]
-        ) {
-          userErrors { field message }
-          confirmationUrl
-          appSubscription { id }
-        }
-      }
-    `;
-
-    const graphqlResponse = await fetch(
-      `https://${shopDomain}/admin/api/2024-01/graphql.json`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Shopify-Access-Token': accessToken,
-        },
-        body: JSON.stringify({ query: mutation }),
-      }
-    );
-
-    const result = await graphqlResponse.json();
-    const { confirmationUrl, userErrors } = result.data?.appSubscriptionCreate || {};
-
-    if (userErrors && userErrors.length > 0) {
-      console.error('Billing errors:', userErrors);
-      return res.status(400).send('Billing error: ' + userErrors.map((e) => e.message).join(', '));
-    }
-
-    if (confirmationUrl) {
-      return res.redirect(confirmationUrl);
-    }
-
-    res.status(500).send('Failed to create subscription');
+    // Redirect merchant to Shopify's native Managed Pricing page
+    const pricingUrl = `https://${shopDomain}/admin/charges/${apiKey}/pricing_plans`;
+    return res.redirect(pricingUrl);
   } catch (error) {
-    console.error('Subscribe error:', error);
-    res.status(500).send('Failed to create subscription');
+    console.error('Subscribe redirect error:', error);
+    res.status(500).send('Failed to redirect to pricing page');
   }
 });
 
