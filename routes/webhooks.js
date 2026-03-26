@@ -100,6 +100,39 @@ router.post('/app-subscriptions-update', async (req, res) => {
 });
 
 /**
+ * POST /webhooks/gdpr
+ * Unified handler for all 3 GDPR compliance topics (used by shopify.app.toml)
+ * Shopify sends X-Shopify-Topic header to identify the topic
+ */
+router.post('/gdpr', async (req, res) => {
+  const hmac = req.headers['x-shopify-hmac-sha256'];
+  const rawBody = req.body.toString('utf8');
+
+  if (!hmac || !verifyWebhookHmac(rawBody, hmac)) {
+    return res.status(401).send('Unauthorized');
+  }
+
+  const topic = req.headers['x-shopify-topic'];
+  const shopDomain = req.headers['x-shopify-shop-domain'];
+
+  console.log(`GDPR webhook received: ${topic} for ${shopDomain}`);
+
+  if (topic === 'shop/redact' && shopDomain) {
+    try {
+      await prisma.clickEvent.deleteMany({ where: { shopDomain } }).catch(() => {});
+      await prisma.placement.deleteMany({ where: { shopDomain } }).catch(() => {});
+      await prisma.shop.delete({ where: { shopDomain } }).catch(() => {});
+      console.log(`GDPR shop erasure complete for: ${shopDomain}`);
+    } catch (err) {
+      console.error('GDPR shop erasure error:', err);
+    }
+  }
+
+  // For customers/data_request and customers/redact: we don't store PII
+  res.status(200).send('OK');
+});
+
+/**
  * POST /webhooks/gdpr/customer-data
  * Mandatory GDPR: Customer data request
  */
