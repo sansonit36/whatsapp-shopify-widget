@@ -99,4 +99,59 @@ router.post('/app-subscriptions-update', async (req, res) => {
   }
 });
 
+/**
+ * POST /webhooks/gdpr/customer-data
+ * Mandatory GDPR: Customer data request
+ */
+router.post('/gdpr/customer-data', (req, res) => {
+  const hmac = req.headers['x-shopify-hmac-sha256'];
+  const rawBody = req.body.toString('utf8');
+  if (hmac && !verifyWebhookHmac(rawBody, hmac)) {
+    return res.status(401).send('Unauthorized');
+  }
+  // We do not store personally identifiable customer data
+  console.log('GDPR customer data request received');
+  res.status(200).send('OK');
+});
+
+/**
+ * POST /webhooks/gdpr/customer-erasure
+ * Mandatory GDPR: Customer data erasure
+ */
+router.post('/gdpr/customer-erasure', (req, res) => {
+  const hmac = req.headers['x-shopify-hmac-sha256'];
+  const rawBody = req.body.toString('utf8');
+  if (hmac && !verifyWebhookHmac(rawBody, hmac)) {
+    return res.status(401).send('Unauthorized');
+  }
+  // We do not store personally identifiable customer data
+  console.log('GDPR customer erasure request received');
+  res.status(200).send('OK');
+});
+
+/**
+ * POST /webhooks/gdpr/shop-erasure
+ * Mandatory GDPR: Shop data erasure (48 hours after uninstall)
+ */
+router.post('/gdpr/shop-erasure', async (req, res) => {
+  const hmac = req.headers['x-shopify-hmac-sha256'];
+  const rawBody = req.body.toString('utf8');
+  if (hmac && !verifyWebhookHmac(rawBody, hmac)) {
+    return res.status(401).send('Unauthorized');
+  }
+  try {
+    const shopDomain = req.headers['x-shopify-shop-domain'];
+    if (shopDomain) {
+      // Permanently delete all shop data
+      await prisma.clickEvent.deleteMany({ where: { shopDomain } }).catch(() => {});
+      await prisma.placement.deleteMany({ where: { shopDomain } }).catch(() => {});
+      await prisma.shop.delete({ where: { shopDomain } }).catch(() => {});
+      console.log(`GDPR shop erasure complete for: ${shopDomain}`);
+    }
+  } catch (err) {
+    console.error('GDPR shop erasure error:', err);
+  }
+  res.status(200).send('OK');
+});
+
 module.exports = router;
